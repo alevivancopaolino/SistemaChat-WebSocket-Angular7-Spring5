@@ -1,0 +1,5 @@
+package com.bolsadeideas.springboot.backed.apirest.models.dao;
+
+public interface IFacturaDao {
+
+}

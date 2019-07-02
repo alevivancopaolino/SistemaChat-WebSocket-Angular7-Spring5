@@ -1,0 +1,118 @@
+package com.bolsadeideas.springboot.backed.apirest.auth;
+
+import java.util.Arrays;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.config.annotation.configurers.ClientDetailsServiceConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
+import org.springframework.security.oauth2.config.annotation.web.configuration.EnableAuthorizationServer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerSecurityConfigurer;
+import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
+import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
+
+@Configuration
+@EnableAuthorizationServer
+public class AuthorizationServerConfig  extends AuthorizationServerConfigurerAdapter {
+	
+	@Autowired
+	private BCryptPasswordEncoder passwordEncoder;
+	
+	@Autowired
+	@Qualifier("authenticationManager")
+	private AuthenticationManager authenticationManager;
+	
+	@Autowired
+	private InfoAdicionalToken infoAdicionalToken;
+
+	//Aca se configuran los permisos de nuestros de nuestros end-poinds , nuestras rutas de acceso pero de Spring Security de oAuth2
+	//tenesmos dos end ponit del AutorizationServer :
+	//Uno para autenticarnos para iniciar sesion y se encarga de generar el token y enviarlo al usuario y esta ruta es publica
+	 
+	@Override
+	public void configure(AuthorizationServerSecurityConfigurer security) throws Exception {
+		
+		//con security vamos a dar el permiso 
+		// y adentro del metodo "tokenKeyAccess" usamos el metodo que da acceso en spring security 
+		//para dar permiso a cualquiir usuario para poder autenticarse
+		//En el EndPoint de login : "/oauth/token/" de OAuth2  		
+		//Este es para dar permiso para general el token cuando se autitica
+		security.tokenKeyAccess("permitAll()")
+				//Lo seundo es dar parmiso al EndPoint que se encarga de validar el token
+				// solo púeden acceder a este EndPoint los clientes autenticados 
+				// este EndPoint corresponderia a : "/oauth/check_token"
+				.checkTokenAccess("isAuthenticated()");
+		
+		security.tokenKeyAccess("permitAll()")
+		.checkTokenAccess("isAuthenticated()");
+	}
+
+	//Aca se configura los clientes que van a acceder a mi APi REST en mi caso va a ser solo : "la aplicacion con Angular 7"
+	//con su Id y contraceña o clave privada
+	//En tonces vamos a crear los clientes que van a axeder a muestra alicacion backend	
+	@Override
+	public void configure(ClientDetailsServiceConfigurer clients) throws Exception {
+		
+		//primero selecionamos el tipo de almacenamiento como poria ser : "inMemory" o "jpa" o"jdbc"
+		clients.inMemory()
+			   	//dspues crear un nuevo cliente con : "withClient"
+				.withClient("angularapp")
+				//luegro agregamos la contraceña con : "secret"
+				.secret(passwordEncoder.encode("12345"))
+				//luego seria indicar el permiso que va a tener el cliente ("o sea leer , escribir") con : "scopes" 
+				.scopes("read" , "write")
+				// luego seria el tipo de conseción del token ("authorizedGrantTypes") , 
+				//o sea como vamos a obtener el token : en nuestro caso va a ser el password
+				//Este es el caso para cuando nos logueamos con usuario y contraceña 
+				//
+				//otro tipo de conseción seria el refresh_token
+				//esto hace que se regenere un nuevo token antes que se caduque o termine el timpo de expidacion del token
+				.authorizedGrantTypes("password", "refresh_token")
+				//para implementar el tipo de caducidad del token seria con : "accessTokenValiditySeconds" 
+				.accessTokenValiditySeconds(3600)
+				//para implementar el tipo de caducidad del refres_token seria con : "refreshTokenValiditySeconds"
+				.refreshTokenValiditySeconds(3600);
+				
+	}
+
+	//Aca se genera de todo el proceso de  -> "antentificación"(en donde se jenera el token si el suario existe en nuestra aplicación) y
+	//validar el token
+	
+	// Y tambien se validan las rutas en el servidor de aplicacion , proceso de -> "AUTORIZACION"
+	@Override
+	public void configure(AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
+		//Agregando informacion extra de nuestro cliente en el JWT:
+		TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
+		tokenEnhancerChain.setTokenEnhancers(Arrays.asList(infoAdicionalToken, accessTokenConverter()));
+		
+		
+		endpoints.authenticationManager(authenticationManager)
+				  // el objeto ("accessTokenConverter") es el encargado de decodificar el JWT
+				  // para que el "authenticationManager" se encargue del proceso de logueo de usaurio
+				  // tambien se encarga de validar el token y la forma del mismo 
+				  // Y guardar la data del usuario : Ej el email , nombre , identificador ,etc.
+				 .accessTokenConverter(accessTokenConverter())
+				 .tokenEnhancer(tokenEnhancerChain);
+	}
+
+	//Este objeto trabaja con toda la implemetación para trabajar con el token de "JDT"
+	@Bean
+	public JwtAccessTokenConverter accessTokenConverter() {
+		JwtAccessTokenConverter jwtAccessTokenConverter = new JwtAccessTokenConverter();
+		//Esta llave es para generar el token basico con una sola clave
+		//jwtAccessTokenConverter.setSigningKey(JwtConfig.LLAVE_SECRETA);
+		
+		//Generamos con clave public y provada , otra forma de hacerlo
+		jwtAccessTokenConverter.setSigningKey(JwtConfig.RSA_PRIVATE);
+		jwtAccessTokenConverter.setVerifierKey(JwtConfig.RSA_PUBLICA);
+		return jwtAccessTokenConverter;
+	}
+	
+	
+	
+}

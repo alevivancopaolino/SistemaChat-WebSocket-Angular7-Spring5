@@ -1,0 +1,5 @@
+package com.bolsadeideas.springboot.backed.apirest.auth;
+
+public class JwtConfig {
+
+}

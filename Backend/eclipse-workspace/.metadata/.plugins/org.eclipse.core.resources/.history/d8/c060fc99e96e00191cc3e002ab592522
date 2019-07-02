@@ -1,0 +1,6 @@
+package com.bolsadeideas.springboot.backed.apirest.controllers;
+
+
+public class FacturaRestController {
+
+}

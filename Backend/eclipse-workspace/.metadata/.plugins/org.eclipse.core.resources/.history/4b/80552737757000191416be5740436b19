@@ -1,0 +1,12 @@
+package com.bolsadeideas.springboot.backend.chat.models.documents;
+
+import java.io.Serializable;
+
+public class Mensaje implements Serializable{
+
+	
+	
+	
+	private static final long serialVersionUID = -3777582564067492550L;
+
+}
