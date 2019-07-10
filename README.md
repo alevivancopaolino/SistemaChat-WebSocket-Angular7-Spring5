@@ -85,7 +85,7 @@ Las funcionalidades más importantes del proyecto son :
 
 * 13) Nuevo mensaje del usuario ("Lucia") en el chat
 <p>
-    <img src="imgPresentacion/img12.png" width="800" height="300" />
+    <img src="imgPresentacion/img13.png" width="800" height="300" />
 </p>
 
 
