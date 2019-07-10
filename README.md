@@ -12,7 +12,7 @@ Las funcionalidades más importantes del proyecto son :
   * Asignar un color aleatorio , diferente y unico cada usuario al ingresar al chat
 
 ------------------------------------------------------------------------------
-### Lenguajes , Frameworks , BD
+### Lenguajes , Frameworks 
 
 * El proyecto del lado del Backend esta desarrollado en base a <b>Spring Framework 5</b> con <b>Spring Boot 2</b> ,
   en la cual se crea una aplicación <b>Spring MVC</b> utilizando en el mismo <b>WebSocket</b> con el protocolo <b>Stomp</b>.
